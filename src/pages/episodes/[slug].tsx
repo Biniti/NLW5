@@ -6,6 +6,8 @@ import { convertDurationToTimeString } from "../../utils/convertDurationToTimeSt
 import styles from "./episode.module.scss"
 import Image from "next/image"
 import Link from "next/link"
+import { usePlayer } from "../../components/Player";
+import Head from "next/head"
 
 type Episode = {
     id: string,
@@ -25,9 +27,13 @@ type EpisodeProps = {
 }
 
 export default function Episode( { episode }: EpisodeProps){
-    
+    const { play } = usePlayer();
+
     return(
         <div className = {styles.episode}>
+            <Head>
+                <title>{episode.title} | Podcastr</title>
+            </Head>
             <div className = {styles.thumbnailContainer}>
                <Link href = "/">
                 <button type="button">
@@ -41,8 +47,14 @@ export default function Episode( { episode }: EpisodeProps){
                 objectFit = "cover"
                 />
 
-                <button type = "button">
-                    <img src="/images/play.svg" alt="Tocar episodio"/>
+                <button 
+                type = "button"
+                onClick = { 
+                    () => play(episode)
+                    }>
+                    <img 
+                    src="/images/play.svg" 
+                    alt="Tocar episodio"/>
                 </button>
             </div>
 
@@ -65,9 +77,25 @@ export default function Episode( { episode }: EpisodeProps){
 
 export const getStaticPaths: GetStaticPaths = async () =>
 {
+    const { data } = await api.get("episodes", {
+        params: {
+        _limit: 2,
+        _sort: "published_at",
+        _order: "desc"
+        }
+    })
+    
+    const paths = data.map(episode =>{
+        return{
+            params: {
+                slug: episode.id,
+            } 
+        }
+    })
+
     return{
-        paths:[],
-        fallback: "blocking"
+    paths,
+    fallback: "blocking"
     }
 }
 
